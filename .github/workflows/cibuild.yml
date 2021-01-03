@@ -1,0 +1,34 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build-linux-arm:
+    runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        Configuration: [Release, Debug]
+        Platform: [armv7, aarch64]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Setup
+      run: |
+        git submodule update --init --recursive
+        git submodule deinit Externals/cryptopp
+    - name: Build
+      uses: uraimo/run-on-arch-action@v2.0.8
+      with:
+        architecture: ${{ matrix.Platform }}
+        distribution: ubuntu20.04
+        run: |
+          cat /etc/apt/sources.list
+          apt-get update && apt-get install -y wget software-properties-common && add-apt-repository -y ppa:ubuntu-toolchain-r/test
+          apt-get install -y libglew-dev libegl1-mesa-dev libgles2-mesa-dev libopenal-dev libtbb-dev libcrypto++-dev liblockfile-dev libfreeimage-dev libfreeimageplus-dev
+          apt-get install -y gcc-9 g++-9 cmake liblua5.1-0-dev libssl-dev libogg-dev libtheora-dev libvorbis-dev liblzo2-dev libjpeg-dev libncurses5-dev libsdl2-dev
+          wget --no-check-certificate https://apt.kitware.com/ubuntu/pool/main/c/cmake/cmake_3.19.1-0kitware1ubuntu20.04.1_armhf.deb
+          wget --no-check-certificate https://apt.kitware.com/ubuntu/pool/main/c/cmake/cmake-data_3.19.1-0kitware1ubuntu20.04.1_all.deb
+          dpkg -i *.deb
+          cmake --version
